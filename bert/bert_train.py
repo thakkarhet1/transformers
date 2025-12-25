@@ -1,13 +1,24 @@
+import torch
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 from bert_tokenizer import BERTWPWrapper
 from bert_model import TransformerConfig, Transformer
 from bert_data_collator import DataCollator
 #config fields: Transformer fields, Data Tokenizer loading, Training hyperparameters
+
+#Collator
 #Data Loader
+#Model itself
+
 #Optimizer
 #Scheduler
-#Accuracy, loss tracking
+#Loss fn
+
+#Checkpointing
+#Accelerator
+#Gradient Accumulation
+
+#Evaluation
 
 #tokenizer=trained, fetch from file path
 
@@ -28,13 +39,14 @@ num_workers = 6
 beta = 0.9
 lr = 1e-2
 epochs = 10
-
+adam_eps = 1e-6
 batch_size = 32
 
 tok_wrapper = BERTWPWrapper(path_to_vocab=path_to_vocab, truncate=True, max_length=max_len)
 tokenizer = tok_wrapper.tokenizer
 dataset = load_dataset("fancyzhx/ag_news", split="train")
 collate_fn_ = DataCollator(max_length=max_len, tokenizer=tokenizer)
+#minbatch_size = batch_size // gradient_accumulation_steps
 
 train = DataLoader(dataset=dataset,
                         batch_size=batch_size, #minibatch here, refer github file
@@ -55,6 +67,15 @@ config = TransformerConfig(
                   learn_pos_embed=pos_grad
                   )
 model = Transformer(config=config)
+
+optimizer = torch.optim.AdamW(params=model.parameters(),
+                              lr=lr,
+                              betas=beta,
+                              eps=adam_eps
+                              )
+loss = torch.nn.CrossEntropyLoss()
+
+
 
 if __name__=="__main__":
     
